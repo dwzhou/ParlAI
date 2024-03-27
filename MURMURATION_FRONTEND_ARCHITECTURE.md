@@ -47,7 +47,6 @@ The biggest thing I see missing from the pipeline is support for IaC, so I'll ad
 
 Missing:
 
-- A registered domain
 - An AWS account
 - AWS credentials for the CircleCI project
 - Terraform remote state setup
@@ -74,7 +73,7 @@ Given more time, I would have given a lot more thought to and made necessary mod
 
 Additionally, I referenced this documentation on how to run Terraform in a CircleCI pipeline: https://developer.hashicorp.com/terraform/tutorials/automation/circle-ci
 
-I added an additional lint and validation job here, but otherwise mostly copied the jobs from here without too many modifications, but given a real CircleCI project to run the pipeline for real, I would have made more modifications to these templates. I also see that there is an [official Terraform orb](https://circleci.com/developer/orbs/orb/circleci/terraform), so I could have used that instead of these jobs from HashiCorp.
+I added an additional lint and validation job here, but otherwise mostly copied the jobs from here without too many modifications. Given a real CircleCI project to run the pipeline, I would have made more modifications to these templates based on testing. I also see that there is an [official Terraform orb](https://circleci.com/developer/orbs/orb/circleci/terraform), so I could have used that instead of these jobs from HashiCorp.
 
 ## Challenges
 
@@ -84,6 +83,6 @@ I've also never had to set up infrastructure to host a website on the public Int
 
 Because I needed to do a decent amount of research for this project, I had less time to spend on implementation, hence my decision to copy some Terraform instead of writing everything from scratch. Unfortunately, I also ran out of time to write any scripts, so I wasn't able to demonstrate my abilities there.
 
-I don't think scripts are strictly necessary for a bare-bones implementation of this simple web hosting architecture, but if I were to have added any scripts, I probably would have written two Python scripts: one for linting/spellchecking the docs Markdown pages, and one for testing the website once deployed. They already have basic liveness tests and a check for broken links. This seems more or less sufficient for basic testing of a static website, but I could have tried to add load/performance tests, for instance. A good basic test also would have been to make sure that HTTP requests get redirected to HTTPS as intended.
+I don't think scripting would be strictly necessary for a bare-bones implementation of this simple web hosting architecture, but if I were to have added any scripts, I probably would have written two Python or bash scripts: one for linting/spellchecking the docs Markdown pages, and one for testing the website once deployed. They already have basic liveness tests and a check for broken links. This seems more or less sufficient for basic testing of a static website, but I could have tried to add load/performance tests, for instance. A good basic test also would have been to make sure that HTTP requests get redirected to HTTPS as intended.
 
 Finally, I couldn't really test that my pipeline and IaC were fully functional given that the pipeline changes were pseudocode, and I don't actually have an AWS environment set up to run my Terraform against. However, I did at least verify that the Terraform syntax was correct.
