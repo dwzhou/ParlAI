@@ -53,6 +53,8 @@ Missing:
 - Terraform remote state setup
 - Generally, the glue between various providers (CircleCI, Terraform/potentially Terraform cloud, AWS)
 - Better security configuration for the AWS resources
+- Improved testing
+- Scripts
 
 Potential improvements:
 
@@ -80,6 +82,8 @@ Firstly, I've never used CircleCI before, so this syntax was totally new to me a
 
 I've also never had to set up infrastructure to host a website on the public Internet from scratch before, so this required some research to see what options there are and what would make the most sense for this use case (docs for an open source project). The closest thing I've done to this is setting up Kubernetes ingresses to be accessible on a company-internal VPN, or to services running in other AWS VPCs. As I've mostly worked with services running in Kubernetes, a lot of this hosting architecture has been abstracted away or handled automatically for me through services like external DNS and the nginx load balancer controller.
 
-Because I needed to do a decent amount of research for this project, I had less time to spend on implementation, hence my decision to copy some Terraform instead of writing everything from scratch.
+Because I needed to do a decent amount of research for this project, I had less time to spend on implementation, hence my decision to copy some Terraform instead of writing everything from scratch. Unfortunately, I also ran out of time to write any scripts, so I wasn't able to demonstrate my abilities there.
+
+I don't think scripts are strictly necessary for a bare-bones implementation of this simple web hosting architecture, but if I were to have added any scripts, I probably would have written two Python scripts: one for linting/spellchecking the docs Markdown pages, and one for testing the website once deployed. They already have basic liveness tests and a check for broken links. This seems more or less sufficient for basic testing of a static website, but I could have tried to add load/performance tests, for instance. A good basic test also would have been to make sure that HTTP requests get redirected to HTTPS as intended.
 
 Finally, I couldn't really test that my pipeline and IaC were fully functional given that the pipeline changes were pseudocode, and I don't actually have an AWS environment set up to run my Terraform against. However, I did at least verify that the Terraform syntax was correct.

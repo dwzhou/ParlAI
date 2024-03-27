@@ -570,7 +570,7 @@ workflows:
           filters:
             branches:
               only: main
-      # Would also add the tf-
+      # Would also add the tf-destroy jobs here to be run after manual approval
       - lint_website:
           filters:
             branches:
