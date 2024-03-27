@@ -256,7 +256,7 @@ commands:
             - "~/ParlAI/data"
       - store_test_results:
           path: test-results
-
+  
   website:
     description: Build (and possibly deploy) the website
     parameters:
@@ -302,6 +302,7 @@ commands:
              working_directory: ~/ParlAI/
              name: Upload the website
              command: |
+               # Would need to make sure these point to the S3 bucket created through Terraform
                pip install s3cmd
                s3cmd --access_key="${S3_ACCESS_KEY}" --secret_key="${S3_SECRET_KEY}" sync -f --delete-removed website/build/ "s3://parl.ai/"
                s3cmd --access_key="${S3_ACCESS_KEY}" --secret_key="${S3_SECRET_KEY}" setacl --acl-public --recursive "s3://parl.ai/"
@@ -400,6 +401,102 @@ jobs:
           marker: teacher
           pytest_flags: -v -s
 
+  # Job to run terraform fmt and terraform validate
+  # to lint formatting and validate that the configuration
+  # is correct
+  # This could be split into two separate jobs
+  tf-lint:
+    working_directory: ../.murmuration-ci/terraform
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: terraform fmt & validate
+          command: |
+            terraform fmt
+            terraform validate
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  
+  # Job to run terraform init and terraform plan
+  # This sets up the Terraform environment and creates a plan
+  # of changes to make to resources
+  # This could be split into two separate jobs 
+  tf-plan-apply:
+    working_directory: ../.murmuration-ci/terraform
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: terraform init & plan
+          command: |
+            terraform init -input=false
+            terraform plan -out tfapply
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  
+  # Job to actually apply Terraform and create resources,
+  # based on the plan from the previous job
+  tf-apply:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: terraform
+          command: |
+            terraform apply -auto-approve tfapply
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  # Job to plan destroying Terraform
+  tf-plan-destroy:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: terraform create destroy plan
+          command: |
+            terraform plan -destroy -out tfdestroy -var-file terraform.tfvars
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  # Job to actually destroy Terraform
+  tf-destroy:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: terraform destroy
+          command: |
+            terraform apply -auto-approve tfdestroy
+  
+  lint_website:
+    executor: small_cpu39
+    working_directory: ~/ParlAI
+    steps:
+      - run:
+          name: Lint the website
+          command: |
+            # Run markdown lint
+            # and spellcheck
+            # (Probably using Python libraries)
+
   build_website:
     executor: small_cpu39
     working_directory: ~/ParlAI
@@ -456,6 +553,28 @@ workflows:
       - teacher_tests:
           requires:
             - unittests_39
+      # Ideally, all of these Terraform jobs would only run if changes were made
+      # in the Terraform directory
+      - tf-lint
+      - tf-plan-apply
+      - hold-apply:
+          type: approval
+          requires:
+            - plan-apply
+          filters:
+            branches:
+              only: main
+      - tf-apply:
+          requires:
+            - hold-apply
+          filters:
+            branches:
+              only: main
+      # Would also add the tf-
+      - lint_website:
+          filters:
+            branches:
+              ignore: main
       - build_website:
           filters:
             branches:
